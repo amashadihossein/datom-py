@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datom"
+version = "0.0.1"
+description = "Version-controlled data management for reproducible workflows"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    {name = "Afshin Mashadi-Hossein", email = "amashadihossein@gmail.com"}
+]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/amashadihossein/datom-py"
+Issues = "https://github.com/amashadihossein/datom-py/issues"
