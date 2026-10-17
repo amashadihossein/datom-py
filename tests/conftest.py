@@ -9,7 +9,7 @@ import pytest
 
 import datom
 
-CASES_DIR = Path(__file__).parent / "reader-cases"
+from tests.reader_cases import CASES_DIR
 
 
 class EditableStore:

@@ -18,7 +18,7 @@ import datom
 from datom._metadata import read_metadata, resolve_version
 from datom._set import find_member
 
-CASES_DIR = Path(__file__).parent / "reader-cases"
+from tests.reader_cases import CASES_DIR
 CASES = sorted(p for p in CASES_DIR.iterdir() if (p / "case.json").is_file())
 
 PROJECT = "STUDY_001"
