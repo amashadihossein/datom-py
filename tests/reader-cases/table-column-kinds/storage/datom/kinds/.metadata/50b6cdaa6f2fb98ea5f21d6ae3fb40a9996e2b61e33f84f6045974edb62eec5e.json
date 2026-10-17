@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "kind": "table",
+  "data_sha": "34d9d288b2b85dee46eff242d3624972b8fdbaad104355178fdd1401b181e76a",
+  "hash_algo": "datom-cv1",
+  "parquet_sha": "f00134699b51416a947c5a3a2e84355cfd75161f85ca70c3030175634c6263ca",
+  "table_type": "derived",
+  "nrow": 3,
+  "ncol": 10,
+  "colnames": ["lgl", "int", "dbl", "chr", "fct", "date", "dttm", "dur", "i64", "lbl"],
+  "created_at": "2026-10-17T03:22:18Z",
+  "datom_version": "0.2.0",
+  "project": "STUDY_001",
+  "size_bytes": 4341
+}

@@ -1,23 +1,36 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
 
 [project]
 name = "datom"
-version = "0.0.1"
-description = "Version-controlled data management for reproducible workflows"
+version = "0.1.0.dev0"
+description = "Read-only Python reader for versioned tables and sets written by R datom"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.9"
-authors = [
-    {name = "Afshin Mashadi-Hossein", email = "amashadihossein@gmail.com"}
-]
+requires-python = ">=3.10"
+authors = [{ name = "Afshin Mashadi-Hossein", email = "amashadihossein@gmail.com" }]
 classifiers = [
-    "Development Status :: 1 - Planning",
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
 ]
+dependencies = [
+  "pyarrow>=20",
+  "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
 
 [project.urls]
 Homepage = "https://github.com/amashadihossein/datom-py"
 Issues = "https://github.com/amashadihossein/datom-py/issues"
+"R package" = "https://github.com/amashadihossein/datom"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/datom"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
