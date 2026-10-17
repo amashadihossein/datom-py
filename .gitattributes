@@ -1,2 +1,0 @@
-# Reader-case storage is hashed byte for byte: never convert line endings.
-tests/reader-cases/** -text

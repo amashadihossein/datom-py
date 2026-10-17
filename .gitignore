@@ -21,3 +21,6 @@ venv/
 
 # OS
 .DS_Store
+
+# Reader cases fetched from R datom (tests/reader_cases.py)
+tests/.reader-cases/

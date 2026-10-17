@@ -2,6 +2,8 @@
 
 Things found while building the first version of this reader that affect R datom or the plan in the issue.
 
+**Status:** 5 and 6 are fixed in R datom (amashadihossein/datom#147). 1 is documented in the reader-cases README there. The cases and their generator now live in R datom, packed as one `storage.zip` per case, because `R CMD check` flags the hidden `.metadata/` folders every store has. 3 is still owed a sentence in this package's docs, and 7 is open.
+
 ## The shared-test plan
 
 1. **Arrow type names don't compare exactly across languages.** The issue assumes `$ToString()` in R and `str()` in Python print the same name. They do for most types, with two exceptions:
