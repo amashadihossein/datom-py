@@ -75,6 +75,16 @@ conn = datom.get_conn(store, project_name="STUDY_001")
 df = datom.read(conn, "dm")
 ```
 
+With AWS single sign-on, `datom.sso_credentials()` makes the function for you. It runs the AWS CLI v2 (`aws configure export-credentials`) each time datom needs fresh credentials; run `aws sso login --profile my-profile` first.
+
+```python
+store = datom.store_s3("my-bucket", prefix="my-project", credentials=datom.sso_credentials("my-profile"))
+```
+
+Signing in with AWS single sign-on stores a temporary token, valid for a few hours, as plain text under `~/.aws/`. That is how AWS's own tools work, and datom cannot avoid it. Treat that folder as sensitive, and never copy or commit it.
+
+`sso_credentials()` refuses credentials with no expiration, since that is what permanent plain-text keys produce. When the AWS CLI fails (not logged in, session expired), the error shows what the CLI said, never the keys it printed.
+
 `bucket`, `prefix` and `region` mean what they mean in R's `datom_store_s3()`. Connecting checks the bucket, which needs the `s3:ListBucket` permission as in R.
 
 The credential rules:
@@ -118,7 +128,7 @@ To show the tests catch a broken rule, `python tools/check_tests_catch_breaks.py
 
 ## Not yet
 
-- **S3 hardening**: a single sign-on helper, and more tests of the credential rules. S3 stores work today as a preview.
+- **S3 hardening**: more tests of the credential rules. S3 stores work today as a preview.
 - S3-compatible stores on other endpoints (MinIO and similar); R datom has no endpoint option either.
 - Finding a project's data location through its governance repo.
 - Rebuilding a manifest whose artifact list can't be read. This package stops with a message where R datom would rebuild.

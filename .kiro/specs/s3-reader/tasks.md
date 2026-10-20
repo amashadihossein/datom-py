@@ -26,7 +26,8 @@ in the message. Tasks 1-4 are the preview; 5-10 harden the same code.
 
 ## Hardening
 
-- [ ] **5. Single sign-on helper** `sso_credentials(profile)` (R6, AC9).
+- [x] **5. Single sign-on helper** `sso_credentials(profile)` (R6, AC9). Branch
+  `spec/s3-reader-hardening`, off `main` after the preview merged (PR #4).
 - [ ] **6. Every ambient source, one at a time**: one planted setting per test, each shown to get
   through when its replaced component is removed (full AC4, research notes section 3.2).
 - [ ] **7. Pickling**: no secret in the pickle bytes of a store or connection after a read (AC8).
@@ -34,6 +35,6 @@ in the message. Tasks 1-4 are the preview; 5-10 harden the same code.
   credential function that cannot be pickled, and one that carries keys inside itself.
 - [ ] **8. Guard probes**: each check's test shown going red with that check alone removed, added to
   `tools/check_tests_catch_breaks.py` where it fits (AC11).
-- [ ] **9. README credential guidance**: the single sign-on caution verbatim from #129 (R9.2). The
-  keyring example (R9.3) landed with task 4.
+- [x] **9. README credential guidance**: the single sign-on caution verbatim from #129 (R9.2)
+  landed with task 5, beside the helper it is about; the keyring example (R9.3) with task 4.
 - [ ] **10. CI on the newest botocore**, since the client builder relies on botocore internals.

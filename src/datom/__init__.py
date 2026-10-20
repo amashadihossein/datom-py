@@ -53,6 +53,7 @@ from ._errors import (
 )
 from ._query import history, list_artifacts
 from ._s3 import S3Store, store_s3
+from ._sso import SsoCredentials, sso_credentials
 from ._set import DatomSet, Member, MemberId, fetch_member, get_set
 from ._store import LocalStore, store_local
 from ._table import read
@@ -90,6 +91,7 @@ __all__ = [
     "SchemaUnsupported",
     "SetMemberMalformed",
     "SetPayloadMalformed",
+    "SsoCredentials",
     "StoreUnreachable",
     "VersionAmbiguous",
     "VersionNotFound",
@@ -100,5 +102,6 @@ __all__ = [
     "list_artifacts",
     "read",
     "store_local",
+    "sso_credentials",
     "store_s3",
 ]
