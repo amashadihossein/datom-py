@@ -141,7 +141,8 @@ metadata) can change which credentials, which region or which endpoint a request
    bucket and turns a denial into the R2.2 error naming the missing permission. Revisit in both
    languages together if a narrowly scoped reader needs it.
 2. **The name of the access-denied error code. DECIDED (owner, 2026-10-17): `access_denied`**, AWS's
-   own term. A broader code can be added beside it later; a released code is never renamed.
+   own term. A broader code can be added beside it later. (Renaming follows the stage-dependent
+   error-code rule in `.kiro/steering/conventions.md`, amended 2026-10-19.)
 3. **When credentials are refreshed. DECIDED (owner, 2026-10-17): botocore's own timing**, with no
    margin of ours. Its refreshable credentials call the function again about 15 minutes before
    expiry and force a refresh in the last 10. AC6's test, that the function is called again as
