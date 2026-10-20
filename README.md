@@ -4,7 +4,7 @@ A read-only Python reader for data written by [datom](https://github.com/amashad
 
 It reads tables, sets, version history and project listings from a datom store, and makes the same checks R datom makes before handing over data. It never writes to storage.
 
-**Status: early development.** It reads local-folder stores only (no S3 yet) and is not on PyPI; the `datom` name there is a 0.0.1 placeholder. This is the Python reader planned in [amashadihossein/datom#129](https://github.com/amashadihossein/datom/issues/129). See [Not yet](#not-yet).
+**Status: early development.** It reads local-folder stores, and S3 stores as a preview. It is not on PyPI; the `datom` name there is a 0.0.1 placeholder. This is the Python reader planned in [amashadihossein/datom#129](https://github.com/amashadihossein/datom/issues/129). See [Not yet](#not-yet).
 
 ## Install
 
@@ -15,7 +15,11 @@ git clone https://github.com/amashadihossein/datom-py
 pip install -e datom-py
 ```
 
-The import name is `datom`.
+The import name is `datom`. For S3 stores, install the `s3` extra, which adds boto3:
+
+```sh
+pip install -e "datom-py[s3]"
+```
 
 ## Use
 
@@ -52,6 +56,36 @@ dm = s.members[1].fetch(conn)
 
 A member from another project needs a connection to that project.
 
+### S3 stores (preview)
+
+Everything above works the same on an S3 store. Instead of keys, you pass a **function** that returns them; datom calls it when it first needs credentials, and again before they expire.
+
+```python
+import keyring   # the OS keychain; any source you trust works
+
+def my_credentials():
+    return {
+        "access_key": keyring.get_password("datom-s3", "access_key"),
+        "secret_key": keyring.get_password("datom-s3", "secret_key"),
+        # optional: "session_token": ..., "expiration": <aware datetime or ISO-8601 string>
+    }
+
+store = datom.store_s3("my-bucket", prefix="my-project", region="us-east-1", credentials=my_credentials)
+conn = datom.get_conn(store, project_name="STUDY_001")
+df = datom.read(conn, "dm")
+```
+
+`bucket`, `prefix` and `region` mean what they mean in R's `datom_store_s3()`. Connecting checks the bucket, which needs the `s3:ListBucket` permission as in R.
+
+The credential rules:
+
+- **datom never looks for credentials.** Only your function's result is used. AWS environment variables, `~/.aws/` files, profiles, single sign-on caches and the machine's instance or container credentials are all ignored, and so are region and endpoint settings in any of those places.
+- **datom never keeps or prints them.** The store holds your function, not its result. Keys never appear when a store or connection is printed, in error messages, or in boto3's debug logs. Pickling a store saves your function but not the keys it returned, so keep keys out of the function itself (fetch them inside it, as above).
+- **Only reads are sent**: S3's `GetObject`, `HeadObject` and `HeadBucket`. Anything else is refused before it leaves.
+- A bucket in a different region from the one you pass is refused, with a message naming the bucket's region.
+
+Errors: a missing object is `not_found`; denied access is `access_denied`; a missing bucket or no network is `store_unreachable`; a bad result from your function is `credentials_invalid`, and an exception from it is `credentials_failed`.
+
 ## What it checks
 
 The same rules as R datom, in the same order:
@@ -65,7 +99,7 @@ The same rules as R datom, in the same order:
 7. **Older manifests** are converted in memory, never written back.
 8. **A governance marker** in storage triggers a warning that the location you supplied may go stale after a data move, then the read carries on, as in R.
 
-Every refusal is a `datom.DatomError` subclass with a stable `code`, such as `integrity_mismatch` or `version_ambiguous`.
+Every refusal is a `datom.DatomError` subclass with a `code`, such as `integrity_mismatch` or `version_ambiguous`. While this package is experimental (0.x), a code's name may still change; its meaning will not.
 
 ## Tests
 
@@ -74,7 +108,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-The tests run against **shared reader cases**: small datom stores written by R datom, each saved with the result any reader must produce. Python must read what R reads and refuse what R refuses, and R datom's own test suite runs the same cases. They live in R datom, under [`tests/testthat/fixtures/reader-cases/`](https://github.com/amashadihossein/datom/tree/dev/tests/testthat/fixtures/reader-cases) (its README describes a case and the error names). Unit tests in `tests/test_rules.py` cover each rule above.
+The tests run against **shared reader cases**: small datom stores written by R datom, each saved with the result any reader must produce. Python must read what R reads and refuse what R refuses, and R datom's own test suite runs the same cases. Each case runs against a local folder and against a fake S3 bucket ([moto](https://github.com/getmoto/moto)), with and without a prefix; no test touches real AWS or needs any AWS configuration. They live in R datom, under [`tests/testthat/fixtures/reader-cases/`](https://github.com/amashadihossein/datom/tree/dev/tests/testthat/fixtures/reader-cases) (its README describes a case and the error names). Unit tests in `tests/test_rules.py` cover each rule above.
 
 The first `pytest` run downloads the cases from the R datom commit pinned in [`tests/reader_cases.py`](tests/reader_cases.py) and caches them under `tests/.reader-cases/`. The pin is bumped on purpose, in its own commit. To test against a local R datom checkout instead, set `DATOM_READER_CASES` to its `tests/testthat/fixtures/reader-cases` folder.
 
@@ -84,7 +118,8 @@ To show the tests catch a broken rule, `python tools/check_tests_catch_breaks.py
 
 ## Not yet
 
-- **S3 stores**, with credentials passed in as a function (never read implicitly from `~/.aws` or the environment).
+- **S3 hardening**: a single sign-on helper, and more tests of the credential rules. S3 stores work today as a preview.
+- S3-compatible stores on other endpoints (MinIO and similar); R datom has no endpoint option either.
 - Finding a project's data location through its governance repo.
 - Rebuilding a manifest whose artifact list can't be read. This package stops with a message where R datom would rebuild.
 - Lineage helpers and diffs.

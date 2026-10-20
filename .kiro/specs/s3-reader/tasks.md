@@ -20,7 +20,7 @@ in the message. Tasks 1-4 are the preview; 5-10 harden the same code.
   and without a prefix (AC1), recording operations (AC2). Wrong keys, region and endpoint planted in
   env vars and `~/.aws/` files, requests checked for the function's key and the given region (AC4
   core). The local-folder suite unchanged (R8.4).
-- [ ] **4. README for the preview, then the PR.** Install the extra; an S3 example with a credential
+- [x] **4. README for the preview, then the PR.** Install the extra; an S3 example with a credential
   function; what datom never reads and never stores, in plain words; mark S3 as a preview in
   "Not yet". PR into `main`.
 
@@ -34,6 +34,6 @@ in the message. Tasks 1-4 are the preview; 5-10 harden the same code.
   credential function that cannot be pickled, and one that carries keys inside itself.
 - [ ] **8. Guard probes**: each check's test shown going red with that check alone removed, added to
   `tools/check_tests_catch_breaks.py` where it fits (AC11).
-- [ ] **9. README credential guidance**: the single sign-on caution verbatim from #129, the keyring
-  example (R9.2, R9.3).
+- [ ] **9. README credential guidance**: the single sign-on caution verbatim from #129 (R9.2). The
+  keyring example (R9.3) landed with task 4.
 - [ ] **10. CI on the newest botocore**, since the client builder relies on botocore internals.
