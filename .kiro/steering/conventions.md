@@ -84,8 +84,13 @@ datom receives secrets explicitly at runtime and never discovers, persists or pr
 
 - Public API is re-exported from `src/datom/__init__.py`; implementation lives in private `_*.py`
   modules.
-- Every refusal is a `DatomError` subclass with a stable `code` (`_errors.py`). **A released code is
-  never renamed or repurposed**; add a new one beside it instead.
+- Every refusal is a `DatomError` subclass with a `code` (`_errors.py`) that callers can match on.
+  - **Never repurpose a code** to mean a different failure, at any stage: a script matching on it
+    would quietly handle the wrong case.
+  - **While datom-py is experimental (0.x)**, a code may be renamed or removed when a better name is
+    learned. Say so in the release notes, and if a shared reader case uses the code, change it in R
+    datom first. This covers names, not meaning; it is not licence to churn codes without a reason.
+  - **From 1.0**, a released code is never renamed; add a new one beside it instead.
 - The package never writes to storage. A store has read methods only.
 - Required dependencies: `pyarrow>=20`, `pandas>=2.0`. Anything else is an optional extra.
 - Small functions, early returns, type hints, no clever metaprogramming.

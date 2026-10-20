@@ -49,6 +49,33 @@ class NotFound(DatomError):
     code = "not_found"
 
 
+class AccessDenied(DatomError):
+    """The storage backend refused the credentials, or refused access to the bucket or an object."""
+
+    code = "access_denied"
+
+
+class CredentialsInvalid(DatomError):
+    """The credential function returned something malformed, or credentials already expired.
+
+    The message names the field and the problem, never a value.
+    """
+
+    code = "credentials_invalid"
+
+
+class CredentialsFailed(DatomError):
+    """The credential function raised. The original exception is chained; its text is not copied."""
+
+    code = "credentials_failed"
+
+
+class ExtraNotInstalled(DatomError):
+    """An optional dependency is missing, e.g. ``pip install "datom[s3]"`` for S3 stores."""
+
+    code = "extra_not_installed"
+
+
 class DocumentUnreadable(DatomError):
     """A stored JSON document could not be parsed."""
 

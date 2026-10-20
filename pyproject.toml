@@ -21,7 +21,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7"]
+# boto3 1.40 pairs with botocore 1.40, the oldest the S3 client builder supports (src/datom/_s3.py).
+s3 = ["boto3>=1.40"]
+dev = ["pytest>=7", "boto3>=1.40", "moto[s3]>=5"]
 
 [project.urls]
 Homepage = "https://github.com/amashadihossein/datom-py"

@@ -36,8 +36,34 @@ def arrow_type_name(t) -> str:
     return str(t).replace(", ordered=0", "").replace("ordered=1", "ordered")
 
 
-def conn_for(case_dir: Path) -> datom.Conn:
-    return datom.get_conn(datom.store_local(case_dir / "storage"), PROJECT)
+#: Each case runs against a local folder and against a fake S3 bucket, with and
+#: without a prefix (R8.1): same expectations, same skip list.
+BACKENDS = ["local", "s3", "s3-prefix"]
+BUCKET = "datom-reader-cases"
+
+
+def s3_store_for(case_dir: Path, prefix: str | None) -> datom.S3Store:
+    """Upload one case's storage to the fake bucket; a store reading it back.
+
+    Must run inside moto's ``mock_aws``.
+    """
+    import boto3
+
+    uploader = boto3.client(
+        "s3", region_name="us-east-1", aws_access_key_id="testing", aws_secret_access_key="testing"
+    )
+    uploader.create_bucket(Bucket=BUCKET)
+    storage = case_dir / "storage"
+    for path in storage.rglob("*"):
+        if path.is_file():
+            key = path.relative_to(storage).as_posix()
+            uploader.put_object(Bucket=BUCKET, Key=f"{prefix}/{key}" if prefix else key, Body=path.read_bytes())
+    credentials = lambda: {"access_key": "AKIAREADERCASES00000", "secret_key": "reader-cases"}  # noqa: E731
+    return datom.store_s3(BUCKET, prefix=prefix, credentials=credentials)
+
+
+def conn_for(case_dir: Path, store=None) -> datom.Conn:
+    return datom.get_conn(store or datom.store_local(case_dir / "storage"), PROJECT)
 
 
 def table_result(case_dir: Path, conn: datom.Conn, name: str, version, table) -> dict:
@@ -82,8 +108,8 @@ def frame_rows(df) -> list[dict]:
     return json.loads(df.to_json(orient="records"))
 
 
-def run_call(case_dir: Path, call: dict) -> dict:
-    conn = conn_for(case_dir)
+def run_call(case_dir: Path, call: dict, store=None) -> dict:
+    conn = conn_for(case_dir, store)
     op = call["op"]
     if op == "read_table":
         table = datom.read(conn, call["name"], version=call["version"], as_arrow=True)
@@ -102,11 +128,7 @@ def run_call(case_dir: Path, call: dict) -> dict:
     raise AssertionError(f"unknown op {op!r}")
 
 
-@pytest.mark.parametrize("case_dir", CASES, ids=[p.name for p in CASES])
-def test_reader_case(case_dir: Path) -> None:
-    if case_dir.name in SKIPPED:
-        pytest.skip(SKIPPED[case_dir.name])
-
+def check_case(case_dir: Path, store=None) -> None:
     case = json.loads((case_dir / "case.json").read_text())
     call, expect = case["call"], case["expect"]
 
@@ -114,16 +136,39 @@ def test_reader_case(case_dir: Path) -> None:
         warnings.simplefilter("always")
         if not expect["ok"]:
             with pytest.raises(datom.DatomError) as err:
-                run_call(case_dir, call)
+                run_call(case_dir, call, store)
             assert err.value.code == expect["error"], str(err.value)
             return
-        got = run_call(case_dir, call)
+        got = run_call(case_dir, call, store)
 
     codes = sorted({w.message.code for w in caught if hasattr(w.message, "code")})
     assert codes == sorted(expect.get("warnings", []))
 
     want = {k: v for k, v in expect.items() if k != "warnings"}
     assert got == want
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+@pytest.mark.parametrize("case_dir", CASES, ids=[p.name for p in CASES])
+def test_reader_case(case_dir: Path, backend: str) -> None:
+    if case_dir.name in SKIPPED:
+        pytest.skip(SKIPPED[case_dir.name])
+    if backend == "local":
+        check_case(case_dir)
+        return
+
+    from moto import mock_aws
+
+    with mock_aws():
+        store = s3_store_for(case_dir, prefix="team/proj" if backend == "s3-prefix" else None)
+        sent = []
+        # Ahead of the store's own guard, so even a request the guard would refuse is seen (AC2).
+        store._get_client().meta.events.register_first(
+            "before-send.s3", lambda event_name, **_: sent.append(event_name.rsplit(".", 1)[-1])
+        )
+        check_case(case_dir, store)
+    assert sent, "no S3 request was made"
+    assert set(sent) <= {"GetObject", "HeadObject", "HeadBucket"}, sorted(set(sent))
 
 
 def test_every_case_is_run() -> None:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -44,6 +45,23 @@ class EditableStore:
         meta = self.read_json(meta_key)
         meta["document_sha"] = hashlib.sha256(raw).hexdigest()
         self.write_json(meta_key, meta)
+
+
+@pytest.fixture(autouse=True)
+def no_ambient_aws(monkeypatch, tmp_path):
+    """Every test runs with no AWS environment variable and an empty home folder.
+
+    So the suite behaves the same on a machine with AWS configured as on one
+    without (R8.2), and no test can pick up real credentials by accident.
+    """
+    for name in list(os.environ):
+        if name.startswith(("AWS_", "BOTOCORE_", "BOTO_")):
+            monkeypatch.delenv(name)
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    return home
 
 
 @pytest.fixture
