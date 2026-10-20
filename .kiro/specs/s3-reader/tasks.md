@@ -10,7 +10,7 @@ in the message. Tasks 1-4 are the preview; 5-10 harden the same code.
   Add `AccessDenied`, `CredentialsInvalid`, `CredentialsFailed`, `ExtraNotInstalled` to `_errors.py`.
   Add `_s3.py` with `store_s3()` argument checks and the "install `datom[s3]`" refusal; export from
   `__init__.py`. Test: AC10 in a fresh interpreter with boto3/botocore blocked.
-- [ ] **2. The store and its client.** `S3Store` (three read methods, key check, `repr`, drop the
+- [x] **2. The store and its client.** `S3Store` (three read methods, key check, `repr`, drop the
   client on pickle), `_build_client()` with the five replaced components, the credential provider and
   `_parse_credentials()`, the request guard (operation allow-list, signing region), the error mapping,
   the debug-log filter. Tests: AC3, AC6, AC7, AC8 without pickle, and the guard refusing a redirected
@@ -30,6 +30,8 @@ in the message. Tasks 1-4 are the preview; 5-10 harden the same code.
 - [ ] **6. Every ambient source, one at a time**: one planted setting per test, each shown to get
   through when its replaced component is removed (full AC4, research notes section 3.2).
 - [ ] **7. Pickling**: no secret in the pickle bytes of a store or connection after a read (AC8).
+  The basic case (a connection pickled after a read) landed with task 2; what remains is a
+  credential function that cannot be pickled, and one that carries keys inside itself.
 - [ ] **8. Guard probes**: each check's test shown going red with that check alone removed, added to
   `tools/check_tests_catch_breaks.py` where it fits (AC11).
 - [ ] **9. README credential guidance**: the single sign-on caution verbatim from #129, the keyring
