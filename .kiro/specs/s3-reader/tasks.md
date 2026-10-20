@@ -5,7 +5,7 @@ in the message. Tasks 1-4 are the preview; 5-10 harden the same code.
 
 ## Preview
 
-- [ ] **1. Packaging, error codes, lazy import.** Recreate the local `.venv` on Python 3.10 or later
+- [x] **1. Packaging, error codes, lazy import.** Recreate the local `.venv` on Python 3.10 or later
   and confirm the 107-test baseline. Add the `s3` extra (`boto3>=1.40`) and `moto[s3]>=5` to `dev`.
   Add `AccessDenied`, `CredentialsInvalid`, `CredentialsFailed`, `ExtraNotInstalled` to `_errors.py`.
   Add `_s3.py` with `store_s3()` argument checks and the "install `datom[s3]`" refusal; export from

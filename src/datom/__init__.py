@@ -1,11 +1,13 @@
 """datom for Python: a read-only reader for data written by R datom.
 
 Early development. Reads tables, sets, history and listings from a local-folder
-store, with the same checks R datom makes before handing over data.
+store, or (preview, ``pip install "datom[s3]"``) an S3 bucket, with the same
+checks R datom makes before handing over data.
 
     import datom
 
     store = datom.store_local("path/to/storage")
+    # or: datom.store_s3("my-bucket", prefix="proj", credentials=my_credential_function)
     conn = datom.get_conn(store, project_name="STUDY_001")
 
     df = datom.read(conn, "dm")                       # current version, pandas
@@ -21,9 +23,13 @@ store, with the same checks R datom makes before handing over data.
 
 from ._conn import Conn, get_conn
 from ._errors import (
+    AccessDenied,
+    CredentialsFailed,
+    CredentialsInvalid,
     DatomError,
     DocumentShaMissing,
     DocumentUnreadable,
+    ExtraNotInstalled,
     GovernanceAttachedWarning,
     IntegrityMismatch,
     InvalidAddress,
@@ -46,6 +52,7 @@ from ._errors import (
     VersionNotFound,
 )
 from ._query import history, list_artifacts
+from ._s3 import S3Store, store_s3
 from ._set import DatomSet, Member, MemberId, fetch_member, get_set
 from ._store import LocalStore, store_local
 from ._table import read
@@ -53,11 +60,15 @@ from ._table import read
 __version__ = "0.1.0.dev0"
 
 __all__ = [
+    "AccessDenied",
     "Conn",
+    "CredentialsFailed",
+    "CredentialsInvalid",
     "DatomError",
     "DatomSet",
     "DocumentShaMissing",
     "DocumentUnreadable",
+    "ExtraNotInstalled",
     "GovernanceAttachedWarning",
     "IntegrityMismatch",
     "InvalidAddress",
@@ -74,6 +85,7 @@ __all__ = [
     "MemberProjectMismatch",
     "MetadataCorrupt",
     "NotFound",
+    "S3Store",
     "SchemaInvalid",
     "SchemaUnsupported",
     "SetMemberMalformed",
@@ -88,4 +100,5 @@ __all__ = [
     "list_artifacts",
     "read",
     "store_local",
+    "store_s3",
 ]
