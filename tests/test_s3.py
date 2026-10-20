@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import io
 import logging
-import os
 import pickle
 import subprocess
 import sys
@@ -161,18 +160,6 @@ def function_credentials():
     return {"access_key": FUNCTION_KEY, "secret_key": FUNCTION_SECRET, "session_token": FUNCTION_TOKEN}
 
 
-@pytest.fixture(autouse=True)
-def no_ambient_aws(monkeypatch, tmp_path):
-    """No AWS environment variable and an empty home folder, for every test here."""
-    for name in list(os.environ):
-        if name.startswith(("AWS_", "BOTOCORE_", "BOTO_")):
-            monkeypatch.delenv(name)
-    home = tmp_path / "home"
-    home.mkdir()
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setenv("USERPROFILE", str(home))
-
-
 @pytest.fixture
 def fake_s3():
     """A moto S3 with one bucket holding ``proj/datom/dm/x.json``."""
@@ -311,6 +298,102 @@ def test_requests_are_signed_with_the_functions_credentials(fake_s3):
     assert f"Credential={FUNCTION_KEY}/" in auth and "/us-east-1/s3/aws4_request" in auth
     token = headers["X-Amz-Security-Token"]
     assert (token.decode() if isinstance(token, bytes) else token) == FUNCTION_TOKEN
+
+
+# --- nothing ambient changes a request (R4, AC4) ------------------------------------
+
+PLANTED_KEY = "AKIAPLANTEDAMBIENT00"
+PLANTED_SECRET = "planted-ambient-secret"
+PLANTED_HOST = "planted.invalid"
+# Not INI: botocore raises ConfigParseError if it ever reads one of these.
+NOT_INI = "this is not an ini file [[[\n"
+PLANTED_PLUGIN = "datom_planted_botocore_plugin"
+
+
+@pytest.fixture
+def planted_ambient_aws(monkeypatch, no_ambient_aws, tmp_path):
+    """Wrong credentials, region and endpoint in every common ambient source.
+
+    Config and credentials files are unparseable, so reading one at all fails
+    the test; env vars point at a wrong key, region and host.
+    """
+    home = no_ambient_aws
+    (home / ".aws").mkdir()
+    for name in ("config", "credentials"):
+        (home / ".aws" / name).write_text(NOT_INI)
+        (tmp_path / f"planted-{name}").write_text(NOT_INI)
+    planted = {
+        "AWS_ACCESS_KEY_ID": PLANTED_KEY,
+        "AWS_SECRET_ACCESS_KEY": PLANTED_SECRET,
+        "AWS_SESSION_TOKEN": "planted-ambient-token",
+        "AWS_PROFILE": "planted",
+        "AWS_DEFAULT_PROFILE": "planted",
+        "AWS_DEFAULT_REGION": "eu-west-1",
+        "AWS_REGION": "eu-west-1",
+        "AWS_ENDPOINT_URL": f"https://{PLANTED_HOST}",
+        "AWS_ENDPOINT_URL_S3": f"https://{PLANTED_HOST}",
+        "AWS_IGNORE_CONFIGURED_ENDPOINT_URLS": "false",
+        "AWS_CONFIG_FILE": str(tmp_path / "planted-config"),
+        "AWS_SHARED_CREDENTIALS_FILE": str(tmp_path / "planted-credentials"),
+        "AWS_USE_FIPS_ENDPOINT": "true",
+        "AWS_USE_DUALSTACK_ENDPOINT": "true",
+        "AWS_S3_US_EAST_1_REGIONAL_ENDPOINT": "regional",
+        "AWS_EC2_METADATA_SERVICE_ENDPOINT": f"http://{PLANTED_HOST}",
+        "AWS_CONTAINER_CREDENTIALS_FULL_URI": f"http://{PLANTED_HOST}/creds",
+        "AWS_BEARER_TOKEN_S3": "planted-bearer-token",
+        # botocore swallows plugin errors, so the planted plugin records being loaded instead.
+        "BOTOCORE_EXPERIMENTAL__PLUGINS": f"planted={PLANTED_PLUGIN}",
+    }
+    for name, value in planted.items():
+        monkeypatch.setenv(name, value)
+    plugins = tmp_path / "plugins"
+    plugins.mkdir()
+    (plugins / f"{PLANTED_PLUGIN}.py").write_text(
+        "LOADED = []\n\ndef initialize_client_plugin(client):\n    LOADED.append(client)\n"
+    )
+    monkeypatch.syspath_prepend(str(plugins))
+    yield
+    sys.modules.pop(PLANTED_PLUGIN, None)
+
+
+def test_ambient_credentials_region_and_endpoint_are_ignored(fake_s3, planted_ambient_aws):
+    store = make_store()
+    sent = []
+
+    def tripwire(request, event_name, **_):
+        # Ahead of the guard and moto: record, and stop a request bound elsewhere at once.
+        from urllib.parse import urlsplit
+
+        auth = request.headers.get("Authorization") or b""
+        sent.append((urlsplit(request.url).hostname, auth.decode() if isinstance(auth, bytes) else auth))
+        if urlsplit(request.url).hostname != f"{BUCKET}.s3.amazonaws.com":
+            raise AssertionError(f"request sent to {urlsplit(request.url).hostname}")
+
+    store._get_client().meta.events.register_first("before-send.s3", tripwire)
+    datom.get_conn(store, "STUDY_001")
+    assert store.read_bytes("dm/x.json") == b'{"a": 1}'
+    assert sent
+    for host, auth in sent:
+        assert host == f"{BUCKET}.s3.amazonaws.com"
+        assert f"Credential={FUNCTION_KEY}/" in auth and "/us-east-1/s3/aws4_request" in auth
+        assert PLANTED_KEY not in auth
+    plugin = sys.modules.get(PLANTED_PLUGIN)
+    assert plugin is None or plugin.LOADED == [], "a botocore plugin from the environment was loaded"
+
+
+def test_requests_go_to_the_given_region():
+    with mock_aws():
+        boto3.client(
+            "s3", region_name="eu-west-2", aws_access_key_id="testing", aws_secret_access_key="testing"
+        ).create_bucket(Bucket="datom-eu", CreateBucketConfiguration={"LocationConstraint": "eu-west-2"})
+        store = datom.store_s3("datom-eu", region="eu-west-2", credentials=function_credentials)
+        sent = record_requests(store)
+        store.check_reachable()
+    (operation, headers), = sent
+    auth = headers["Authorization"]
+    auth = auth.decode() if isinstance(auth, bytes) else auth
+    assert operation == "HeadBucket"
+    assert "/eu-west-2/s3/aws4_request" in auth
 
 
 # --- credentials (R3) ---------------------------------------------------------------

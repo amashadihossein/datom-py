@@ -15,7 +15,7 @@ in the message. Tasks 1-4 are the preview; 5-10 harden the same code.
   `_parse_credentials()`, the request guard (operation allow-list, signing region), the error mapping,
   the debug-log filter. Tests: AC3, AC6, AC7, AC8 without pickle, and the guard refusing a redirected
   region and a disallowed operation.
-- [ ] **3. Reader cases on fake S3, and ambient settings.** Autouse fixture removing `AWS_*` variables
+- [x] **3. Reader cases on fake S3, and ambient settings.** Autouse fixture removing `AWS_*` variables
   and pointing `HOME` at an empty folder. Every reader case uploaded and run through `store_s3()`, with
   and without a prefix (AC1), recording operations (AC2). Wrong keys, region and endpoint planted in
   env vars and `~/.aws/` files, requests checked for the function's key and the given region (AC4
