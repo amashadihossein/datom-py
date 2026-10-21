@@ -58,7 +58,7 @@ from ._set import DatomSet, Member, MemberId, fetch_member, get_set
 from ._store import LocalStore, store_local
 from ._table import read
 
-__version__ = "0.1.0.dev0"
+__version__ = "0.1.0"
 
 __all__ = [
     "AccessDenied",
