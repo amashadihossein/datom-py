@@ -173,6 +173,8 @@ def _refresher(credentials: CredentialFunction) -> Callable[[], dict]:
     def refresh() -> dict:
         try:
             result = credentials()
+        except DatomError:
+            raise  # e.g. from sso_credentials(), whose messages are already safe
         except Exception as e:
             # The exception's text is not copied: a user function could have put a key in it.
             raise CredentialsFailed(
