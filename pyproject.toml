@@ -33,6 +33,10 @@ Issues = "https://github.com/amashadihossein/datom-py/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["src/datom"]
 
+[tool.hatch.build.targets.sdist]
+# Specs, agent steering and CI files are for working on the repo, not for users.
+exclude = [".kiro", ".github"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
