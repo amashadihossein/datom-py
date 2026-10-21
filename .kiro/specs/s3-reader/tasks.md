@@ -28,7 +28,7 @@ in the message. Tasks 1-4 are the preview; 5-10 harden the same code.
 
 - [x] **5. Single sign-on helper** `sso_credentials(profile)` (R6, AC9). Branch
   `spec/s3-reader-hardening`, off `main` after the preview merged (PR #4).
-- [ ] **6. Every ambient source, one at a time**: one planted setting per test, each shown to get
+- [x] **6. Every ambient source, one at a time**: one planted setting per test, each shown to get
   through when its replaced component is removed (full AC4, research notes section 3.2).
 - [ ] **7. Pickling**: no secret in the pickle bytes of a store or connection after a read (AC8).
   The basic case (a connection pickled after a read) landed with task 2; what remains is a
