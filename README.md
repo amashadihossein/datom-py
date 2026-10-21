@@ -4,22 +4,18 @@ A read-only Python reader for data written by [datom](https://github.com/amashad
 
 It reads tables, sets, version history and project listings from a datom store, and makes the same checks R datom makes before handing over data. It never writes to storage.
 
-**Status: early development.** It reads local-folder stores, and S3 stores as a preview. It is not on PyPI; the `datom` name there is a 0.0.1 placeholder. This is the Python reader planned in [amashadihossein/datom#129](https://github.com/amashadihossein/datom/issues/129). See [Not yet](#not-yet).
+**Status: early development.** It reads local-folder stores, and S3 stores as a preview. Expect changes between 0.x releases; see the [changelog](https://github.com/amashadihossein/datom-py/blob/main/CHANGELOG.md). This is the Python reader planned in [amashadihossein/datom#129](https://github.com/amashadihossein/datom/issues/129). See [Not yet](#not-yet).
 
 ## Install
 
 Python 3.10 or later.
 
 ```sh
-git clone https://github.com/amashadihossein/datom-py
-pip install -e datom-py
+pip install datom          # local-folder stores
+pip install "datom[s3]"    # S3 stores too (adds boto3)
 ```
 
-The import name is `datom`. For S3 stores, install the `s3` extra, which adds boto3:
-
-```sh
-pip install -e "datom-py[s3]"
-```
+The import name is `datom`. To work on the package itself, clone the repository and `pip install -e ".[dev]"` (see [Tests](#tests)).
 
 ## Use
 
@@ -120,7 +116,7 @@ pytest
 
 The tests run against **shared reader cases**: small datom stores written by R datom, each saved with the result any reader must produce. Python must read what R reads and refuse what R refuses, and R datom's own test suite runs the same cases. Each case runs against a local folder and against a fake S3 bucket ([moto](https://github.com/getmoto/moto)), with and without a prefix; no test touches real AWS or needs any AWS configuration. They live in R datom, under [`tests/testthat/fixtures/reader-cases/`](https://github.com/amashadihossein/datom/tree/dev/tests/testthat/fixtures/reader-cases) (its README describes a case and the error names). Unit tests in `tests/test_rules.py` cover each rule above.
 
-The first `pytest` run downloads the cases from the R datom commit pinned in [`tests/reader_cases.py`](tests/reader_cases.py) and caches them under `tests/.reader-cases/`. The pin is bumped on purpose, in its own commit. To test against a local R datom checkout instead, set `DATOM_READER_CASES` to its `tests/testthat/fixtures/reader-cases` folder.
+The first `pytest` run downloads the cases from the R datom commit pinned in [`tests/reader_cases.py`](https://github.com/amashadihossein/datom-py/blob/main/tests/reader_cases.py) and caches them under `tests/.reader-cases/`. The pin is bumped on purpose, in its own commit. To test against a local R datom checkout instead, set `DATOM_READER_CASES` to its `tests/testthat/fixtures/reader-cases` folder.
 
 GitHub Actions runs the tests on Python 3.10 to 3.13 (Linux), and on Windows and macOS.
 
@@ -134,9 +130,8 @@ To show the tests catch a broken rule, `python tools/check_tests_catch_breaks.py
 - Rebuilding a manifest whose artifact list can't be read. This package stops with a message where R datom would rebuild.
 - Lineage helpers and diffs.
 - Writing anything. That needs datom's table hashing reproduced byte for byte.
-- A PyPI release.
 
-Things found while building the reader that affect R datom or the plan in #129 are listed in [FINDINGS.md](FINDINGS.md).
+Things found while building the reader that affect R datom or the plan in #129 are listed in [FINDINGS.md](https://github.com/amashadihossein/datom-py/blob/main/FINDINGS.md).
 
 ## License
 

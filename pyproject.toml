@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datom"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Read-only Python reader for versioned tables and sets written by R datom"
 readme = "README.md"
 license = "MIT"
@@ -28,6 +28,7 @@ dev = ["pytest>=7", "boto3>=1.40", "moto[s3]>=5"]
 [project.urls]
 Homepage = "https://github.com/amashadihossein/datom-py"
 Issues = "https://github.com/amashadihossein/datom-py/issues"
+Changelog = "https://github.com/amashadihossein/datom-py/blob/main/CHANGELOG.md"
 "R package" = "https://github.com/amashadihossein/datom"
 
 [tool.hatch.build.targets.wheel]
